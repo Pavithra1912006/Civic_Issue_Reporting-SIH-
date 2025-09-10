@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Issues - Naagrik</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      background: #f7f8fc;
+      color: #333;
+    }
+
+    /* Navbar */
+    nav {
+      background: #6c63ff;
+      padding: 15px 30px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav .logo {
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+    nav .menu a {
+      margin: 0 15px;
+      color: white;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+    nav .menu a.active {
+      font-weight: bold;
+      border-bottom: 2px solid white;
+    }
+
+    /* Main */
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .search-filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .search-filter input, 
+    .search-filter select {
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .issue-card {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .issue-info {
+      max-width: 80%;
+    }
+
+    .issue-title {
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 5px;
+    }
+
+    .issue-desc {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .meta {
+      font-size: 0.8rem;
+      color: #777;
+    }
+
+    .issue-status {
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: red;
+      border: 1px solid red;
+      padding: 3px 8px;
+      border-radius: 8px;
+    }
+
+    /* Actions */
+    .actions {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-size: 0.85rem;
+    }
+
+    .actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #555;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .actions button:hover {
+      color: #000;
+    }
+
+    /* Comments */
+    .comments {
+      margin-top: 8px;
+      padding-left: 10px;
+      font-size: 0.85rem;
+      color: #444;
+    }
+
+    .comment-input {
+      margin-top: 8px;
+      display: flex;
+      gap: 5px;
+    }
+
+    .comment-input input {
+      flex: 1;
+      padding: 5px 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .comment-input button {
+      padding: 5px 10px;
+      background: #6c63ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav>
+    <div class="logo">Naagrik</div>
+    <div class="menu">
+      <a href="index.html">Home</a>
+      <a href="report.html">Report Issue</a>
+      <a href="map.html">Map View</a>
+      <a href="issues.html" class="active">Issues</a>
+      <a href="#">Become Steward</a>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="container">
+    <h1>Community Issues</h1>
+    <p id="count"></p>
+
+    <!-- Search & Filters -->
+    <div class="search-filter">
+      <input type="text" id="search" placeholder="Search issues by title, description, or location...">
+      <select id="categoryFilter">
+        <option value="">All Categories</option>
+        <option>Potholes</option>
+        <option>Streetlight</option>
+        <option>Water</option>
+        <option>Electricity</option>
+        <option>Waste</option>
+      </select>
+      <select id="zoneFilter">
+        <option value="">All Zones</option>
+        <option>Zone 1</option>
+        <option>Zone 2</option>
+        <option>Zone 3</option>
+      </select>
+      <select id="priorityFilter">
+        <option value="">All Priority</option>
+        <option>Low</option>
+        <option>Medium</option>
+        <option>High</option>
+      </select>
+      <select id="sortBy">
+        <option value="latest">Latest</option>
+        <option value="oldest">Oldest</option>
+      </select>
+    </div>
+
+    <!-- Issues List -->
+    <div id="issuesList"></div>
+  </div>
+
+  <script>
+    function loadIssues() {
+      let issues = JSON.parse(localStorage.getItem("issues")) || [];
+      let list = document.getElementById("issuesList");
+      let count = document.getElementById("count");
+
+      // Filters
+      const search = document.getElementById("search").value.toLowerCase();
+      const category = document.getElementById("categoryFilter").value;
+      const zone = document.getElementById("zoneFilter").value;
+      const priority = document.getElementById("priorityFilter").value;
+      const sortBy = document.getElementById("sortBy").value;
+
+      let filtered = issues.filter(issue => {
+        return (
+          (issue.title.toLowerCase().includes(search) || issue.description.toLowerCase().includes(search)) &&
+          (category === "" || issue.category === category) &&
+          (zone === "" || issue.zone === zone) &&
+          (priority === "" || issue.priority === priority)
+        );
+      });
+
+      // Sort
+      if (sortBy === "latest") {
+        filtered.reverse();
+      }
+
+      list.innerHTML = "";
+      count.innerText = filtered.length + " issues found";
+
+      if (filtered.length === 0) {
+        list.innerHTML = "<p>No issues found.</p>";
+        return;
+      }
+
+      filtered.forEach((issue, index) => {
+        if (!issue.likes) issue.likes = 0;
+        if (!issue.dislikes) issue.dislikes = 0;
+        if (!issue.comments) issue.comments = [];
+
+        let card = document.createElement("div");
+        card.className = "issue-card";
+        card.innerHTML = `
+          <div class="issue-info">
+            <div class="issue-title">${issue.title}</div>
+            <div class="issue-desc">${issue.description}</div>
+            <div class="meta">Category: ${issue.category} | Zone: ${issue.zone} | Priority: ${issue.priority}</div>
+            <div class="meta">Reported by Citizen | Location: ${issue.latitude}, ${issue.longitude}</div>
+
+            <div class="actions">
+              <button onclick="likeIssue(${index})">👍 <span id="like-${index}">${issue.likes}</span></button>
+              <button onclick="dislikeIssue(${index})">👎 <span id="dislike-${index}">${issue.dislikes}</span></button>
+              <button onclick="toggleComments(${index})">💬 <span id="commentCount-${index}">${issue.comments.length}</span></button>
+            </div>
+
+            <div class="comments" id="comments-${index}" style="display:none;">
+              <div id="commentList-${index}">
+                ${issue.comments.map(c => `<p>💬 ${c}</p>`).join("")}
+              </div>
+              <div class="comment-input">
+                <input type="text" id="commentInput-${index}" placeholder="Add a comment...">
+                <button onclick="addComment(${index})">Post</button>
+              </div>
+            </div>
+          </div>
+          <a href="issue-detail.html?index=${index}" class="issue-status">OPEN</a>
+
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function likeIssue(index) {
+      let issues = JSON.parse(localStorage.getItem("issues")) || [];
+      issues[index].likes = (issues[index].likes || 0) + 1;
+      localStorage.setItem("issues", JSON.stringify(issues));
+      document.getElementById(`like-${index}`).innerText = issues[index].likes;
+    }
+
+    function dislikeIssue(index) {
+      let issues = JSON.parse(localStorage.getItem("issues")) || [];
+      issues[index].dislikes = (issues[index].dislikes || 0) + 1;
+      localStorage.setItem("issues", JSON.stringify(issues));
+      document.getElementById(`dislike-${index}`).innerText = issues[index].dislikes;
+    }
+
+    function toggleComments(index) {
+      const section = document.getElementById(`comments-${index}`);
+      section.style.display = section.style.display === "none" ? "block" : "none";
+    }
+
+    function addComment(index) {
+      let issues = JSON.parse(localStorage.getItem("issues")) || [];
+      let input = document.getElementById(`commentInput-${index}`);
+      if (input.value.trim() === "") return;
+      issues[index].comments.push(input.value.trim());
+      localStorage.setItem("issues", JSON.stringify(issues));
+      loadIssues(); // reload to update UI
+    }
+
+    document.getElementById("search").addEventListener("input", loadIssues);
+    document.getElementById("categoryFilter").addEventListener("change", loadIssues);
+    document.getElementById("zoneFilter").addEventListener("change", loadIssues);
+    document.getElementById("priorityFilter").addEventListener("change", loadIssues);
+    document.getElementById("sortBy").addEventListener("change", loadIssues);
+
+    // Load on start
+    window.onload = loadIssues;
+  </script>
+</body>
+</html>
